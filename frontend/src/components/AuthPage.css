@@ -1,0 +1,236 @@
+/* Background Animation */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #ffffff;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Container */
+.auth-container {
+  width: 900px;
+  max-width: 95vw;
+  height: 550px;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1.2s ease forwards;
+  background: #ffffff;
+  margin: 40px auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Left Form Section */
+.form-section {
+  flex: 1;
+  padding: 50px;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: slideInLeft 1s ease forwards;
+  border-right: 1px solid #f0f0f0;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.form-section h2 {
+  margin-bottom: 30px;
+  font-size: 28px;
+  text-align: center;
+  color: #333;
+  font-weight: 600;
+}
+
+.form-section form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-section input {
+  margin: 8px 0;
+  padding: 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.4s ease;
+  background: #fff;
+  color: #333;
+}
+
+.form-section input:focus {
+  border-color: #ffdd57;
+  box-shadow: 0 0 15px rgba(255, 221, 87, 0.3);
+  transform: scale(1.02);
+}
+
+.form-section input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.form-section button {
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 30px;
+  background: #ffdd57;
+  color: #000;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.form-section button:hover:not(:disabled) {
+  background: #ffd000;
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 221, 87, 0.4);
+}
+
+.form-section button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.form-section p {
+  margin-top: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.form-section a {
+  color: #ffdd57;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.form-section a:hover {
+  color: #ffd000;
+  text-decoration: underline;
+}
+
+/* Error Message */
+.error-message {
+  color: #e74c3c;
+  font-size: 14px;
+  margin: 10px 0;
+  padding: 10px;
+  background: #ffeaea;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* Right Image Section */
+.image-section {
+  flex: 1;
+  background: url('https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=900&q=80') no-repeat center center/cover;
+  position: relative;
+  animation: carFloat 8s ease-in-out infinite, carZoom 12s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes carFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+/* Zoom animation */
+@keyframes carZoom {
+  0%, 100% { background-size: 105%; }
+  50% { background-size: 110%; }
+}
+
+/* Dark overlay */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  animation: glow 4s ease-in-out infinite;
+}
+
+/* Glow pulse */
+@keyframes glow {
+  0%, 100% { 
+    background: rgba(0, 0, 0, 0.3); 
+    box-shadow: 0 0 20px rgba(255, 221, 87, 0.2) inset; 
+  }
+  50% { 
+    background: rgba(0, 0, 0, 0.2); 
+    box-shadow: 0 0 40px rgba(255, 221, 87, 0.4) inset; 
+  }
+}
+
+/* Page Transition */
+.hidden {
+  display: none;
+}
+
+.fade {
+  animation: fadeIn 0.8s ease forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .auth-container {
+    flex-direction: column;
+    width: 95vw;
+    height: auto;
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-container {
+    margin: 20px auto;
+  }
+  
+  .form-section, .image-section {
+    flex: none;
+  }
+  
+  .image-section {
+    height: 200px;
+  }
+  
+  .form-section {
+    padding: 30px;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+/* Success Message */
+.success-message {
+  color: #27ae60;
+  font-size: 14px;
+  margin: 10px 0;
+  padding: 10px;
+  background: #eafaf1;
+  border: 1px solid #a3e4d7;
+  border-radius: 5px;
+  text-align: center;
+}
