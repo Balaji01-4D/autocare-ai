@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  background: #000;
+}
+
+.container {
+  width: 350px;
+  padding: 30px;
+  border-radius: 12px;
+  background: #000;
+  color: white;
+  text-align: center;
+  box-shadow: 0 0 25px #00ff00;
+  animation: glowBlink 2s infinite alternate;
+  transition: transform 0.5s ease-in-out;
+}
+
+@keyframes glowBlink {
+  0%   { box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  50%  { box-shadow: 0 0 30px #ff00ff, 0 0 60px #ff00ff; }
+  100% { box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.container input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  outline: none;
+  border-radius: 6px;
+  background: #111;
+  color: #fff;
+  font-size: 15px;
+}
+
+.container input::placeholder {
+  color: rgba(255,255,255,0.6);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #ccc;
+  margin: 12px 0;
+}
+
+.container button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #00ff00;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  animation: buttonBlink 2s infinite alternate;
+}
+
+@keyframes buttonBlink {
+  0%   { background: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+  50%  { background: #ff00ff; box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+  100% { background: #00ffff; box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+}
+
+.toggle-text {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.toggle-text a {
+  color: #00ff00;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.toggle-text a:hover {
+  color: #ff00ff;
+}
+
+#signupForm {
+  display: none;
+}
