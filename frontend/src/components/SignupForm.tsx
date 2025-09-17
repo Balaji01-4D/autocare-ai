@@ -53,10 +53,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignupSucces
         return 'Phone number must be 10 digits';
       }
 
-      // Password validation (as per backend requirements)
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-      if (!passwordRegex.test(formData.password)) {
-        return 'Password must be at least 8 characters with uppercase, lowercase, number, and special character';
+      // Password validation (simplified - only length requirement)
+      if (formData.password.length < 8) {
+        return 'Password must be at least 8 characters';
       }
       return null;
     }

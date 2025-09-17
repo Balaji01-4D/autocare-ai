@@ -141,7 +141,7 @@ def register_user_controller(
     if not validate_password_strength(password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters with uppercase, lowercase, digit, and special character"
+            detail="Password must be at least 8 characters"
         )
     
     with Session(engine) as session:

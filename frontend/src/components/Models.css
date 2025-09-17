@@ -1,0 +1,382 @@
+/* BMW-Style Models Page */
+.models-page {
+  min-height: 100vh;
+  padding-top: 80px;
+  background: #ffffff;
+}
+
+/* Hero Section */
+.models-hero {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  color: white;
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+}
+
+.models-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="%23ffffff" fill-opacity="0.03" points="0,1000 1000,0 1000,1000"/></svg>');
+  background-size: cover;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.hero-content h1 {
+  font-size: clamp(48px, 6vw, 72px);
+  font-weight: 300;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+}
+
+.hero-content p {
+  font-size: 20px;
+  opacity: 0.9;
+  font-weight: 300;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Models Container */
+.models-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 30px;
+}
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 40px;
+}
+
+/* Model Cards */
+.model-card {
+  background: white;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.model-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.model-image-container {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+}
+
+.model-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.model-card:hover .model-image {
+  transform: scale(1.05);
+}
+
+.model-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Model Info */
+.model-info {
+  padding: 32px;
+}
+
+.model-header {
+  margin-bottom: 16px;
+}
+
+.model-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.model-price {
+  font-size: 18px;
+  color: #0066cc;
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.model-description {
+  color: #666666;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.model-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.feature-badge {
+  background: #f5f5f5;
+  color: #333333;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.feature-badge:hover {
+  background: #0066cc;
+  color: white;
+  border-color: #0066cc;
+}
+
+/* Action Buttons */
+.model-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ask-ai-btn {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ask-ai-btn:hover {
+  background: #0052a3;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 102, 204, 0.3);
+}
+
+.learn-more-btn {
+  background: transparent;
+  color: #000000;
+  border: 2px solid #000000;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.learn-more-btn:hover {
+  background: #000000;
+  color: white;
+}
+
+/* CTA Section */
+.models-cta-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 100px 0;
+}
+
+.cta-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 0 30px;
+}
+
+.cta-content h2 {
+  font-size: clamp(36px, 4vw, 48px);
+  font-weight: 300;
+  color: #000000;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.cta-content p {
+  font-size: 18px;
+  color: #666666;
+  margin-bottom: 50px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 16px 32px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 200px;
+}
+
+.btn-primary {
+  background: #0066cc;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0052a3;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 102, 204, 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.btn-secondary:hover {
+  background: #000000;
+  color: white;
+  transform: translateY(-3px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .models-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+  }
+
+  .models-container {
+    padding: 80px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .models-hero {
+    padding: 60px 0;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(36px, 8vw, 48px);
+  }
+
+  .hero-content p {
+    font-size: 16px;
+  }
+
+  .models-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .models-container {
+    padding: 60px 15px;
+  }
+
+  .model-info {
+    padding: 24px;
+  }
+
+  .model-name {
+    font-size: 24px;
+  }
+
+  .model-image-container {
+    height: 240px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .models-hero {
+    padding: 40px 0;
+  }
+
+  .models-container {
+    padding: 40px 10px;
+  }
+
+  .model-info {
+    padding: 20px;
+  }
+
+  .model-name {
+    font-size: 22px;
+  }
+
+  .model-price {
+    font-size: 16px;
+  }
+
+  .model-image-container {
+    height: 200px;
+  }
+
+  .feature-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .ask-ai-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .learn-more-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
