@@ -157,5 +157,3 @@ def create_user(user_data: CreateUserRequest):
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "timestamp": "2025-09-16", "version": "2.0.0"}
-
-

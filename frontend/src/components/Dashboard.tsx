@@ -15,7 +15,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
       alignItems: 'center'
     }}>
       <h1 style={{ color: '#333', marginBottom: '20px' }}>
-        Welcome to AutoCare AI Dashboard!
+        Welcome to BMW India Dashboard!
       </h1>
       <p style={{ color: '#666', fontSize: '18px' }}>
         You have successfully logged in.

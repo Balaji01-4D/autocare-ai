@@ -36,7 +36,7 @@ const Service: React.FC = () => {
   return (
     <div className="service-page">
       <div className="service-header">
-        <h1>AutoCare AI Services</h1>
+        <h1>BMW India Services</h1>
         <p>Experience the future of automotive care with our intelligent service solutions</p>
       </div>
 

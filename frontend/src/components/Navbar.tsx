@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { authService } from '../services/auth';
+import BMWLogo from './BMWLogo';
 import './Navbar.css';
 
 interface NavbarProps {
@@ -19,12 +20,10 @@ const Navbar: React.FC<NavbarProps> = ({ isAuthenticated, setIsAuthenticated }) 
       <div className="nav-container">
         {/* Logo */}
         <Link to="/" className="nav-logo">
-          <div className="logo">
-            AC
-          </div>
+          <BMWLogo size={50} />
           <div>
-            <span className="logo-text">AutoCare AI</span>
-            <span className="tagline">Sheer Driving Intelligence</span>
+            <span className="logo-text">BMW India</span>
+            <span className="tagline">Sheer Driving Pleasure</span>
           </div>
         </Link>
 

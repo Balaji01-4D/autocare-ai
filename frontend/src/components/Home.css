@@ -28,6 +28,7 @@
   margin-bottom: 20px;
   letter-spacing: 1px;
   text-transform: uppercase;
+  animation: slideInLeft 0.8s ease-out;
 }
 
 .hero-title {
@@ -37,6 +38,7 @@
   line-height: 1.2;
   margin-bottom: 30px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  animation: slideInLeft 1s ease-out 0.2s both;
 }
 
 .cta-button {
@@ -48,6 +50,7 @@
   font-weight: 500;
   border-radius: 0;
   cursor: pointer;
+  animation: slideInLeft 1.2s ease-out 0.4s both;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -64,47 +67,17 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  max-width: 500px;
+  max-width: 650px;
 }
 
-.car-placeholder {
+.hero-image-content {
   width: 100%;
-  max-width: 450px;
-  height: 350px;
-  background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+  max-width: 600px;
+  height: auto;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-.car-display {
-  text-align: center;
-  position: relative;
-  z-index: 2;
-}
-
-.inside-text {
-  color: #ffffff;
-  font-size: 32px;
-  font-weight: 300;
-  line-height: 1.2;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.car-placeholder::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  z-index: 1;
+  object-fit: cover;
+  animation: slideInRight 1s ease-out 0.3s both;
 }
 
 .features-section {
@@ -167,9 +140,8 @@
     font-size: clamp(28px, 4.5vw, 42px);
   }
 
-  .car-placeholder {
-    max-width: 400px;
-    height: 320px;
+  .hero-image-content {
+    max-width: 520px;
   }
 }
 
@@ -197,13 +169,8 @@
     margin-bottom: 16px;
   }
 
-  .car-placeholder {
-    max-width: 320px;
-    height: 250px;
-  }
-
-  .inside-text {
-    font-size: clamp(20px, 4vw, 28px);
+  .hero-image-content {
+    max-width: 400px;
   }
 
   .features-section {
@@ -237,17 +204,35 @@
     font-size: clamp(22px, 7vw, 32px);
   }
 
-  .car-placeholder {
-    max-width: 280px;
-    height: 220px;
-  }
-
-  .inside-text {
-    font-size: clamp(18px, 5vw, 24px);
+  .hero-image-content {
+    max-width: 320px;
   }
 
   .cta-button {
     padding: 12px 24px;
     font-size: 14px;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
   }
 }

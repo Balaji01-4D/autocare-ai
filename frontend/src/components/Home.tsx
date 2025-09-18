@@ -1,5 +1,6 @@
 import React from 'react';
 import './Home.css';
+import homescreenImage from '../assets/homescreen_image.jpg';
 
 const Home: React.FC = () => {
   return (
@@ -8,11 +9,10 @@ const Home: React.FC = () => {
       <section className="hero-section">
         <div className="hero-content">
           <div className="hero-text">
-            <h2 className="hero-subtitle">Inside AutoCare AI</h2>
+            <h2 className="hero-subtitle">Inside BMW India</h2>
             <h1 className="hero-title">
-              AI-powered automotive<br />
-              care shaping<br />
-              the future
+              Driving Innovation,<br />
+              Defining the Future
             </h1>
             <button className="cta-button">
               Learn more →
@@ -20,11 +20,11 @@ const Home: React.FC = () => {
           </div>
         </div>
         <div className="hero-image">
-          <div className="car-placeholder">
-            <div className="car-display">
-              <span className="inside-text">INSIDE<br />AUTO CARE<br />AI</span>
-            </div>
-          </div>
+          <img 
+            src={homescreenImage} 
+            alt="BMW India - BMW Vehicle" 
+            className="hero-image-content"
+          />
         </div>
       </section>
 
