@@ -22,3 +22,7 @@ sqlmodel==0.0.24
 starlette==0.47.3
 typing-extensions==4.15.0
 typing-inspection==0.4.1
+langchain
+langchain-ollama
+langchain-chroma
+pandas

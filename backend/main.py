@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import SQLModel
 from datetime import datetime
 from typing import Optional
-import random
+from llama import get_response  
 from controllers import (
     register_user_controller,
     login_user_controller, 
@@ -397,45 +397,9 @@ def generate_automotive_response(message: str, user: User) -> str:
     Generate automotive-focused AI response
     """
     lower_message = message.lower()
-    
-    # Car recommendation responses
-    if any(word in lower_message for word in ['recommend', 'suggest', 'buy']):
-        if 'sedan' in lower_message:
-            return f"Hi {user.name}! For sedans, I'd recommend the Honda Accord for reliability, Toyota Camry for fuel efficiency, or BMW 3 Series for luxury and performance. What's your budget range?"
-        elif 'suv' in lower_message:
-            return f"Great choice, {user.name}! Popular SUV options include Honda CR-V (fuel efficient), Toyota Highlander (family-friendly), or BMW X5 (luxury). What size do you prefer?"
-        elif any(word in lower_message for word in ['electric', 'ev', 'tesla']):
-            return f"Electric vehicles are excellent, {user.name}! Consider Tesla Model 3, BMW i4, or Honda Accord Hybrid. What's your daily driving range?"
-        else:
-            return f"I'd love to help you find the perfect car, {user.name}! Could you tell me your preferred type (sedan, SUV, hatchback), budget, and primary use?"
-    
-    # Maintenance responses
-    elif any(word in lower_message for word in ['maintenance', 'service', 'repair']):
-        if 'oil' in lower_message:
-            return "Regular oil changes are crucial! Conventional oil: every 3,000-5,000 miles. Synthetic oil: 7,500-10,000 miles. Always check your owner's manual!"
-        elif any(word in lower_message for word in ['tire', 'tyre']):
-            return "Tire maintenance tips: Check pressure monthly, rotate every 6,000-8,000 miles, replace when tread reaches 2/32 inch. Watch for uneven wear!"
-        elif 'brake' in lower_message:
-            return "Brake safety is critical! Inspect every 12,000 miles, replace pads every 30,000-70,000 miles depending on driving habits. Listen for squealing or grinding sounds."
-        else:
-            return "Key maintenance items: oil changes, tire rotation, brake inspection, air filter replacement, fluid checks. What specific maintenance question do you have?"
-    
-    # BMW specific
-    elif 'bmw' in lower_message:
-        return f"{user.name}, BMW offers exceptional luxury and performance! Popular models: 3 Series (sports sedan), X5 (luxury SUV), i4 (electric). Interested in a specific model?"
-    
-    # General automotive
-    elif any(word in lower_message for word in ['fuel', 'gas', 'mpg']):
-        return "Fuel efficiency depends on engine size, vehicle weight, driving habits, and maintenance. Hybrids and smaller engines offer better MPG. Regular maintenance helps too!"
-    
-    # Default responses
-    else:
-        responses = [
-            f"That's interesting, {user.name}! Could you provide more details so I can give you a targeted automotive recommendation?",
-            f"I'd love to help with that automotive question, {user.name}! Could you be more specific about what you're looking for?",
-            f"As your AutoCare AI assistant, {user.name}, I can help with car recommendations, maintenance advice, and automotive questions. What would you like to explore?"
-        ]
-        return random.choice(responses)
+    print(lower_message + f" (my name details are : {str(user)})")
+
+    return get_response(lower_message + f" (my name details are : {str(user)})")
 
 def get_dummy_cars_data():
     """
@@ -538,57 +502,10 @@ def generate_enhanced_automotive_response(message: str, selected_cars: list, use
     """
     lower_message = message.lower()
     
-    # If cars are selected, provide comparison-focused responses
-    if selected_cars:
-        car_names = [car["name"] for car in selected_cars]
-        car_names_str = ", ".join(car_names[:-1]) + f" and {car_names[-1]}" if len(car_names) > 1 else car_names[0]
-        
-        # Car comparison responses
-        if any(word in lower_message for word in ['compare', 'difference', 'better', 'vs']):
-            if len(selected_cars) >= 2:
-                car1, car2 = selected_cars[0], selected_cars[1]
-                price_diff = abs(car1["price"] - car2["price"])
-                cheaper_car = car1 if car1["price"] < car2["price"] else car2
-                expensive_car = car2 if car1["price"] < car2["price"] else car1
-                
-                return f"Great question, {user.name}! Comparing {car_names_str}:\n\n" \
-                       f"💰 **Price**: {cheaper_car['name']} starts at ${cheaper_car['price']:,} while {expensive_car['name']} is ${expensive_car['price']:,} (${price_diff:,} difference)\n" \
-                       f"🔧 **Engine**: {car1['name']} has {car1['engine']} vs {car2['name']} with {car2['engine']}\n" \
-                       f"⛽ **Fuel**: Both use {car1['fuel_type']}\n" \
-                       f"✨ **Key Features**: {car1['name']} offers {', '.join(car1['features'][:2])} while {car2['name']} features {', '.join(car2['features'][:2])}\n\n" \
-                       f"Which aspect would you like me to elaborate on?"
-            else:
-                return f"I'd love to help you compare {car_names_str}, {user.name}! Please select at least 2 cars to see a detailed comparison."
-        
-        # Feature-focused questions
-        elif any(word in lower_message for word in ['feature', 'option', 'include']):
-            features_text = "\n".join([f"🚗 **{car['name']}**: {', '.join(car['features'])}" for car in selected_cars])
-            return f"Here are the key features for your selected vehicles, {user.name}:\n\n{features_text}\n\nWhich features are most important to you?"
-        
-        # Price-focused questions
-        elif any(word in lower_message for word in ['price', 'cost', 'budget', 'afford']):
-            prices_text = "\n".join([f"💰 {car['name']}: ${car['price']:,}" for car in selected_cars])
-            total_price = sum(car['price'] for car in selected_cars)
-            avg_price = total_price // len(selected_cars)
-            return f"Here's the pricing for your selected vehicles, {user.name}:\n\n{prices_text}\n\n📊 Average price: ${avg_price:,}\n\nWould you like information about financing options?"
-        
-        # Performance questions
-        elif any(word in lower_message for word in ['engine', 'performance', 'power', 'speed']):
-            engine_text = "\n".join([f"🏎️ **{car['name']}**: {car['engine']} ({car['fuel_type']})" for car in selected_cars])
-            return f"Here's the engine and performance information, {user.name}:\n\n{engine_text}\n\nWould you like to know more about fuel efficiency or driving dynamics?"
-        
-        # Default with selected cars
-        else:
-            return f"I can help you with {car_names_str}, {user.name}! These are excellent choices. You can ask me to:\n" \
-                   f"• Compare their features and pricing\n" \
-                   f"• Explain engine specifications\n" \
-                   f"• Discuss financing options\n" \
-                   f"• Schedule a test drive\n\nWhat would you like to know?"
-    
-    # No cars selected - general automotive responses
-    else:
-        if any(word in lower_message for word in ['compare', 'comparison']):
-            return f"Hi {user.name}! I'd love to help you compare vehicles. Please use the Compare button to select the BMW models you're interested in, then I can provide detailed comparisons!"
-        
-        # Use existing general responses
-        return generate_automotive_response(message, user)
+
+    return generate_automotive_response(message, user)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000)

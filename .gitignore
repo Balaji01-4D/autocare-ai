@@ -72,3 +72,4 @@ venv/
 .temp
 .tmp
 autocare.db
+chroma_db
