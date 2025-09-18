@@ -71,3 +71,4 @@ venv/
 .cache
 .temp
 .tmp
+autocare.db

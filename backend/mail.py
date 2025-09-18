@@ -30,3 +30,4 @@ def send_mail(receiver: str, subject: str, body: str):
         print(f"Failed to send email: {e}")
 
 
+send_mail("annetraj2005@gmail.com", "hello", "this is a test mail")

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
 class AddressCreate(BaseModel):
     door_no: str = Field(..., min_length=1, max_length=50)
@@ -82,3 +83,31 @@ class CreateUserRequest(BaseModel):
     city: str
     state: str
     zipcode: str
+
+# Car related schemas
+class CarResponse(BaseModel):
+    id: str
+    name: str
+    model: str
+    year: int
+    price: int
+    image: Optional[str] = None
+    features: Optional[List[str]] = None
+    engine: Optional[str] = None
+    fuel_type: Optional[str] = None
+
+class CarsListResponse(BaseModel):
+    cars: List[CarResponse]
+    user: Optional[UserResponse] = None  # Optional for public access
+    timestamp: datetime
+
+# Chatbot related schemas
+class ChatbotRequest(BaseModel):
+    message: str
+    selected_cars: Optional[List[str]] = []  # List of car IDs
+
+class ChatbotResponse(BaseModel):
+    response: str
+    user: Optional[UserResponse] = None  # Optional for non-authenticated users
+    timestamp: datetime
+    selected_cars_info: Optional[List[CarResponse]] = None
