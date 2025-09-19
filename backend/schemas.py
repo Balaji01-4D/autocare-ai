@@ -86,19 +86,76 @@ class CreateUserRequest(BaseModel):
 
 # Car related schemas
 class CarResponse(BaseModel):
-    id: str
-    name: str
-    model: str
-    year: int
-    price: int
-    image: Optional[str] = None
-    features: Optional[List[str]] = None
-    engine: Optional[str] = None
-    fuel_type: Optional[str] = None
+    id: int
+    model_name: str
+    model_year: int
+    trim_variant: str
+    body_type: str
+    
+    # Dimensions
+    length_mm: Optional[int] = None
+    width_mm: Optional[int] = None
+    height_mm: Optional[int] = None
+    wheelbase_mm: Optional[int] = None
+    curb_weight_kg: Optional[int] = None
+    
+    # Engine specs
+    engine_type: Optional[str] = None
+    displacement_cc: Optional[int] = None
+    cylinders: Optional[str] = None
+    horsepower_hp: Optional[int] = None
+    torque_nm: Optional[int] = None
+    
+    # Drivetrain
+    transmission: Optional[str] = None
+    drivetrain: Optional[str] = None
+    
+    # Performance
+    acceleration_0_100_s: Optional[float] = None
+    top_speed_kmh: Optional[int] = None
+    fuel_consumption_combined: Optional[float] = None
+    co2_emissions: Optional[int] = None
+    electric_range_km: Optional[int] = None
+    
+    # Features and colors
+    infotainment: Optional[str] = None
+    safety_features: Optional[List[str]] = None
+    exterior_colors_available: Optional[List[str]] = None
+    interior_materials_colors: Optional[List[str]] = None
+    wheel_sizes_available: Optional[List[str]] = None
+    
+    # Pricing and media
+    base_msrp_usd: Optional[int] = None
+    image_link: Optional[str] = None
+    
+    # Computed display name
+    display_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
 
 class CarsListResponse(BaseModel):
     cars: List[CarResponse]
     user: Optional[UserResponse] = None  # Optional for public access
+    timestamp: datetime
+
+# Lightweight schema for car comparison
+class CarComparisonResponse(BaseModel):
+    id: int
+    model_name: str
+    model_year: int
+    trim_variant: str
+    body_type: str
+    base_msrp_usd: Optional[int] = None
+    display_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class CarsComparisonListResponse(BaseModel):
+    cars: List[CarComparisonResponse]
+    limit: int
+    total_available: int
     timestamp: datetime
 
 # Chatbot related schemas

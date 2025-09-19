@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Navbar from './components/Navbar'
 import Home from './components/Home'
 import Models from './components/Models'
+import CarDetail from './components/CarDetail'
 import Service from './components/Service'
 import Chatbot from './components/Chatbot'
 import AuthPage from './components/AuthPage'
@@ -31,6 +32,7 @@ const AppContent = ({ isAuthenticated, setIsAuthenticated }: {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/models" element={<Models />} />
+        <Route path="/models/:id" element={<CarDetail />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>

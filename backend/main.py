@@ -13,6 +13,13 @@ from controllers import (
     get_current_user,
     engine
 )
+from car_controllers import (
+    get_all_cars_controller,
+    get_cars_by_ids_controller,
+    get_cars_for_comparison_controller,
+    convert_car_to_response,
+    convert_car_to_comparison_response
+)
 from schemas import (
     UserRegister, 
     UserLogin, 
@@ -23,9 +30,14 @@ from schemas import (
     CreateUserRequest,  # For backward compatibility
     CarResponse,
     CarsListResponse,
+    CarComparisonResponse,
+    CarsComparisonListResponse,
     ChatbotRequest,
     ChatbotResponse
 )
+from models import User
+from pydantic import BaseModel
+from memory_store import ConversationMemory
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
@@ -42,7 +54,6 @@ def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials
         return get_current_user(credentials)
     except:
         return None
-from models import User
 
 app = FastAPI(
     title="AutoCare AI API", 
@@ -57,6 +68,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class Query(BaseModel):
+    user_id: str
+    query: str
+
+memory = ConversationMemory()
 
 # Create database tables
 @app.on_event("startup")
@@ -188,99 +205,11 @@ def get_cars():
     Get list of available cars for comparison - Public endpoint, no authentication required
     """
     try:
-        # Dummy BMW car data
-        cars_data = [
-            {
-                "id": "1",
-                "name": "BMW X5",
-                "model": "X5",
-                "year": 2024,
-                "price": 65000,
-                "image": "/images/bmw-x5.jpg",
-                "features": ["All-Wheel Drive", "Panoramic Sunroof", "Premium Sound", "Navigation"],
-                "engine": "3.0L Twin-Turbo I6",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "2",
-                "name": "BMW 3 Series",
-                "model": "3 Series",
-                "year": 2024,
-                "price": 45000,
-                "image": "/images/bmw-3-series.jpg",
-                "features": ["Rear-Wheel Drive", "Sport Suspension", "Premium Interior", "iDrive System"],
-                "engine": "2.0L Twin-Turbo I4",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "3",
-                "name": "BMW X3",
-                "model": "X3",
-                "year": 2024,
-                "price": 55000,
-                "image": "/images/bmw-x3.jpg",
-                "features": ["All-Wheel Drive", "Heated Seats", "Wireless Charging", "Surround View"],
-                "engine": "2.0L Twin-Turbo I4",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "4",
-                "name": "BMW 5 Series",
-                "model": "5 Series",
-                "year": 2024,
-                "price": 58000,
-                "image": "/images/bmw-5-series.jpg",
-                "features": ["Executive Package", "Massaging Seats", "Gesture Control", "Advanced Safety"],
-                "engine": "2.0L Twin-Turbo I4",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "5",
-                "name": "BMW X7",
-                "model": "X7",
-                "year": 2024,
-                "price": 85000,
-                "image": "/images/bmw-x7.jpg",
-                "features": ["7-Seater", "Premium Luxury", "Air Suspension", "Executive Lounge"],
-                "engine": "3.0L Twin-Turbo I6",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "6",
-                "name": "BMW i4",
-                "model": "i4",
-                "year": 2024,
-                "price": 56000,
-                "image": "/images/bmw-i4.jpg",
-                "features": ["Electric Drive", "Fast Charging", "Eco Mode", "BMW iDrive 8"],
-                "engine": "Electric Motor",
-                "fuel_type": "Electric"
-            },
-            {
-                "id": "7",
-                "name": "BMW X1",
-                "model": "X1",
-                "year": 2024,
-                "price": 38000,
-                "image": "/images/bmw-x1.jpg",
-                "features": ["Compact SUV", "All-Wheel Drive Available", "Premium Entry", "Efficient Design"],
-                "engine": "2.0L Twin-Turbo I4",
-                "fuel_type": "Gasoline"
-            },
-            {
-                "id": "8",
-                "name": "BMW M3",
-                "model": "M3",
-                "year": 2024,
-                "price": 75000,
-                "image": "/images/bmw-m3.jpg",
-                "features": ["High Performance", "Track Mode", "Carbon Fiber", "M Sport Package"],
-                "engine": "3.0L Twin-Turbo I6",
-                "fuel_type": "Gasoline"
-            }
-        ]
+        # Get all cars from database
+        cars_from_db = get_all_cars_controller()
         
-        cars = [CarResponse(**car) for car in cars_data]
+        # Convert to response format
+        cars = [convert_car_to_response(car) for car in cars_from_db]
         
         return CarsListResponse(
             cars=cars,
@@ -294,6 +223,71 @@ def get_cars():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching cars: {str(e)}"
+        )
+
+@app.get("/api/cars/comparison", response_model=CarsComparisonListResponse)
+def get_cars_for_comparison(limit: int = 10):
+    """
+    Get limited cars for comparison with only essential data - Public endpoint
+    Maximum limit is 10 cars to prevent performance issues
+    """
+    try:
+        # Enforce maximum limit of 10 cars
+        comparison_limit = min(limit, 10)
+        
+        # Get limited cars from database
+        cars_from_db = get_cars_for_comparison_controller(comparison_limit)
+        
+        # Get total count for reference
+        from car_controllers import get_car_count_controller
+        total_count = get_car_count_controller()
+        
+        # Convert to lightweight response format
+        cars = [convert_car_to_comparison_response(car) for car in cars_from_db]
+        
+        return CarsComparisonListResponse(
+            cars=cars,
+            limit=comparison_limit,
+            total_available=total_count,
+            timestamp=datetime.utcnow()
+        )
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching cars for comparison: {str(e)}"
+        )
+
+@app.get("/api/cars/{car_id}", response_model=CarResponse)
+def get_car_by_id(car_id: int):
+    """
+    Get single car by ID - Public endpoint, no authentication required
+    """
+    try:
+        from car_controllers import get_car_by_id_controller
+        
+        # Get car from database
+        car_from_db = get_car_by_id_controller(car_id)
+        
+        if not car_from_db:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Car with ID {car_id} not found"
+            )
+        
+        # Convert to response format
+        car_response = convert_car_to_response(car_from_db)
+        
+        return car_response
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching car: {str(e)}"
         )
 
 @app.post("/api/chatbot", response_model=ChatbotResponse)
@@ -312,9 +306,15 @@ def chatbot_api(
         # Get selected cars info if any
         selected_cars_info = []
         if selected_car_ids:
-            # This would normally query a database, but for now using dummy data
-            all_cars = get_dummy_cars_data()
-            selected_cars_info = [car for car in all_cars if car["id"] in selected_car_ids]
+            try:
+                # Convert string IDs to integers
+                car_ids = [int(car_id) for car_id in selected_car_ids]
+                # Get cars from database
+                selected_cars_from_db = get_cars_by_ids_controller(car_ids)
+                selected_cars_info = [convert_car_to_response(car) for car in selected_cars_from_db]
+            except ValueError:
+                # Handle invalid car IDs gracefully
+                selected_cars_info = []
         
         # Generate response based on message and selected cars
         if current_user:
@@ -339,7 +339,7 @@ def chatbot_api(
             from models import User as UserModel
             
             # Create a temporary user object for the response generator
-            temp_user = UserModel(id=0, name="Guest", email="guest@example.com", number="", password_hash="")
+            temp_user = UserModel(id=0, name="Guest", email="guest@example.com", number="", password="")
             response_text = generate_enhanced_automotive_response(user_message, selected_cars_info, temp_user)
             user_data = None
 
@@ -347,7 +347,7 @@ def chatbot_api(
             response=response_text,
             user=user_data,
             timestamp=datetime.utcnow(),
-            selected_cars_info=[CarResponse(**car) for car in selected_cars_info] if selected_cars_info else None
+            selected_cars_info=selected_cars_info if selected_cars_info else None
         )
         
     except HTTPException as e:
@@ -384,7 +384,7 @@ def chatbot_message(
                 "number": current_user.number
             }
         }
-    except HTTP+Exception as e:
+    except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(
@@ -401,109 +401,24 @@ def generate_automotive_response(message: str, user: User) -> str:
 
     return get_response(lower_message + f" (my name details are : {str(user)})")
 
-def get_dummy_cars_data():
-    """
-    Get dummy cars data (same as in /api/cars endpoint)
-    """
-    return [
-        {
-            "id": "1",
-            "name": "BMW X5",
-            "model": "X5",
-            "year": 2024,
-            "price": 65000,
-            "image": "/images/bmw-x5.jpg",
-            "features": ["All-Wheel Drive", "Panoramic Sunroof", "Premium Sound", "Navigation"],
-            "engine": "3.0L Twin-Turbo I6",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "2",
-            "name": "BMW 3 Series",
-            "model": "3 Series",
-            "year": 2024,
-            "price": 45000,
-            "image": "/images/bmw-3-series.jpg",
-            "features": ["Rear-Wheel Drive", "Sport Suspension", "Premium Interior", "iDrive System"],
-            "engine": "2.0L Twin-Turbo I4",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "3",
-            "name": "BMW X3",
-            "model": "X3",
-            "year": 2024,
-            "price": 55000,
-            "image": "/images/bmw-x3.jpg",
-            "features": ["All-Wheel Drive", "Heated Seats", "Wireless Charging", "Surround View"],
-            "engine": "2.0L Twin-Turbo I4",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "4",
-            "name": "BMW 5 Series",
-            "model": "5 Series",
-            "year": 2024,
-            "price": 58000,
-            "image": "/images/bmw-5-series.jpg",
-            "features": ["Executive Package", "Massaging Seats", "Gesture Control", "Advanced Safety"],
-            "engine": "2.0L Twin-Turbo I4",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "5",
-            "name": "BMW X7",
-            "model": "X7",
-            "year": 2024,
-            "price": 85000,
-            "image": "/images/bmw-x7.jpg",
-            "features": ["7-Seater", "Premium Luxury", "Air Suspension", "Executive Lounge"],
-            "engine": "3.0L Twin-Turbo I6",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "6",
-            "name": "BMW i4",
-            "model": "i4",
-            "year": 2024,
-            "price": 56000,
-            "image": "/images/bmw-i4.jpg",
-            "features": ["Electric Drive", "Fast Charging", "Eco Mode", "BMW iDrive 8"],
-            "engine": "Electric Motor",
-            "fuel_type": "Electric"
-        },
-        {
-            "id": "7",
-            "name": "BMW X1",
-            "model": "X1",
-            "year": 2024,
-            "price": 38000,
-            "image": "/images/bmw-x1.jpg",
-            "features": ["Compact SUV", "All-Wheel Drive Available", "Premium Entry", "Efficient Design"],
-            "engine": "2.0L Twin-Turbo I4",
-            "fuel_type": "Gasoline"
-        },
-        {
-            "id": "8",
-            "name": "BMW M3",
-            "model": "M3",
-            "year": 2024,
-            "price": 75000,
-            "image": "/images/bmw-m3.jpg",
-            "features": ["High Performance", "Track Mode", "Carbon Fiber", "M Sport Package"],
-            "engine": "3.0L Twin-Turbo I6",
-            "fuel_type": "Gasoline"
-        }
-    ]
-
 def generate_enhanced_automotive_response(message: str, selected_cars: list, user: User) -> str:
     """
     Generate enhanced automotive response with car comparison support
     """
     lower_message = message.lower()
     
+    # Build context with selected car information if available
+    car_context = ""
+    if selected_cars:
+        car_context = "Selected cars for comparison: "
+        for car in selected_cars:
+            car_context += f"{car.display_name} (${car.base_msrp_usd:,} USD), "
+        car_context = car_context.rstrip(", ") + ". "
+    
+    # Add car context to the message
+    enhanced_message = car_context + message
 
-    return generate_automotive_response(message, user)
+    return generate_automotive_response(enhanced_message, user)
 
 
 if __name__ == "__main__":

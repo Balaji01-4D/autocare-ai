@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import carService from '../services/car';
 import './Chatbot.css';
 
 // API Configuration
@@ -13,17 +14,15 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Interface for car data - matches backend CarResponse
+// Interface for car data used in comparison - lightweight version
 interface Car {
   id: string;
-  name: string;
-  model: string;
-  year: number;
-  price: number;
-  image?: string;
-  features: string[];
-  engine: string;
-  fuel_type: string;
+  model_name: string;
+  model_year: number;
+  trim_variant: string;
+  body_type: string;
+  base_msrp_usd?: number;
+  display_name?: string;
 }
 
 const Chatbot: React.FC = () => {
@@ -41,6 +40,8 @@ const Chatbot: React.FC = () => {
   const [selectedCars, setSelectedCars] = useState<Car[]>([]);
   const [availableCars, setAvailableCars] = useState<Car[]>([]);
   const [showCarSelector, setShowCarSelector] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoadingCars, setIsLoadingCars] = useState(false);
   
   // Refs for DOM manipulation
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -73,22 +74,21 @@ const Chatbot: React.FC = () => {
     adjustTextareaHeight();
   }, [inputValue]);
 
-  // Real API functions
+  // Real API functions - fetch all cars for search, limit selection to 10
   const fetchCarsFromAPI = async (): Promise<Car[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cars`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.cars; // Extract cars array from CarsListResponse
+      // Use full cars endpoint to get all available cars for searching
+      const response = await carService.getCars();
+      // Convert full Car objects to lightweight Car interface for consistency
+      return response.cars.map(fullCar => ({
+        id: fullCar.id.toString(),
+        model_name: fullCar.model_name,
+        model_year: fullCar.model_year,
+        trim_variant: fullCar.trim_variant,
+        body_type: fullCar.body_type,
+        base_msrp_usd: fullCar.base_msrp_usd,
+        display_name: `${fullCar.model_year} ${fullCar.model_name} ${fullCar.trim_variant}`
+      }));
     } catch (error) {
       console.error('Error fetching cars from API:', error);
       throw error;
@@ -127,9 +127,11 @@ const Chatbot: React.FC = () => {
 
   // Handle compare cars functionality
   const handleCompareCars = async () => {
+    setIsLoadingCars(true);
     try {
       const cars = await fetchCarsFromAPI();
       setAvailableCars(cars);
+      setSearchQuery(''); // Clear search when opening modal
       setShowCarSelector(true);
     } catch (error) {
       console.error('Error fetching cars:', error);
@@ -141,19 +143,24 @@ const Chatbot: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoadingCars(false);
     }
   };
 
-  // Handle car selection
+  // Handle car selection - enforce 10 car limit for comparison
   const toggleCarSelection = (car: Car) => {
     setSelectedCars(prev => {
       const isSelected = prev.find(c => c.id === car.id);
       if (isSelected) {
         return prev.filter(c => c.id !== car.id);
-      } else if (prev.length < 3) { // Limit to 3 cars for comparison
+      } else if (prev.length < 10) { // Limit to 10 cars for comparison performance
         return [...prev, car];
+      } else {
+        // Optional: Show a message that limit is reached
+        console.warn('Cannot select more than 10 cars for comparison');
+        return prev;
       }
-      return prev;
     });
   };
 
@@ -161,6 +168,27 @@ const Chatbot: React.FC = () => {
   const removeSelectedCar = (carId: string) => {
     setSelectedCars(prev => prev.filter(car => car.id !== carId));
   };
+
+  // Filter cars based on search query
+  const filteredCars = availableCars.filter(car => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    const displayName = carService.getComparisonDisplayName({
+      id: parseInt(car.id),
+      model_name: car.model_name,
+      model_year: car.model_year,
+      trim_variant: car.trim_variant,
+      body_type: car.body_type,
+      base_msrp_usd: car.base_msrp_usd,
+      display_name: car.display_name
+    }).toLowerCase();
+    
+    return displayName.includes(searchLower) || 
+           car.model_name.toLowerCase().includes(searchLower) ||
+           car.body_type?.toLowerCase().includes(searchLower) ||
+           car.trim_variant?.toLowerCase().includes(searchLower) ||
+           car.model_year.toString().includes(searchQuery);
+  });
 
   // Handle sending messages
   const sendMessage = async () => {
@@ -289,8 +317,24 @@ const Chatbot: React.FC = () => {
               <div className="selected-cars-list">
                 {selectedCars.map((car) => (
                   <div key={car.id} className="selected-car-item">
-                    <span className="car-name">{car.name}</span>
-                    <span className="car-price">${car.price.toLocaleString()}</span>
+                    <span className="car-name">{carService.getComparisonDisplayName({
+                      id: parseInt(car.id),
+                      model_name: car.model_name,
+                      model_year: car.model_year,
+                      trim_variant: car.trim_variant,
+                      body_type: car.body_type,
+                      base_msrp_usd: car.base_msrp_usd,
+                      display_name: car.display_name
+                    })}</span>
+                    <span className="car-price">{carService.getComparisonDisplayPrice({
+                      id: parseInt(car.id),
+                      model_name: car.model_name,
+                      model_year: car.model_year,
+                      trim_variant: car.trim_variant,
+                      body_type: car.body_type,
+                      base_msrp_usd: car.base_msrp_usd,
+                      display_name: car.display_name
+                    })}</span>
                     <button 
                       onClick={() => removeSelectedCar(car.id)}
                       className="remove-car-btn"
@@ -308,35 +352,123 @@ const Chatbot: React.FC = () => {
             <div className="car-selector-modal">
               <div className="car-selector-content">
                 <div className="car-selector-header">
-                  <h3>Select cars to compare (max 3)</h3>
+                  <div>
+                    <h3>Select cars to compare (max 10)</h3>
+                    <p className="search-info">
+                      {isLoadingCars ? 
+                        'Loading...' : 
+                        searchQuery ? 
+                          `${filteredCars.length} of ${availableCars.length} cars match "${searchQuery}"` :
+                          `${availableCars.length} cars available`
+                      }
+                    </p>
+                  </div>
                   <button 
-                    onClick={() => setShowCarSelector(false)}
+                    onClick={() => {
+                      setShowCarSelector(false);
+                      setSearchQuery(''); // Clear search when closing
+                    }}
                     className="close-selector-btn"
                   >
                     ×
                   </button>
                 </div>
+                
+                {/* Search Input */}
+                <div className="car-search-container">
+                  <input
+                    type="text"
+                    placeholder="Search across all BMW models, years (2000-2025), trims..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="car-search-input"
+                  />
+                  <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="clear-search-btn"
+                    >
+                      ×
+                    </button>
+                  )}
+                  
+                  {/* Quick search suggestions */}
+                  {!searchQuery && (
+                    <div className="search-suggestions">
+                      {['3 Series', '2024', 'SUV', 'M3', 'X5'].map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => setSearchQuery(suggestion)}
+                          className="suggestion-btn"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="car-list">
-                  {availableCars.map((car) => {
-                    const isSelected = selectedCars.find(c => c.id === car.id);
-                    const canSelect = selectedCars.length < 3 || isSelected;
-                    
-                    return (
-                      <div 
-                        key={car.id} 
-                        className={`car-item ${isSelected ? 'selected' : ''} ${!canSelect ? 'disabled' : ''}`}
-                        onClick={() => canSelect && toggleCarSelection(car)}
-                      >
-                        <div className="car-info">
-                          <span className="car-name">{car.name}</span>
-                          <span className="car-details">{car.year} • ${car.price.toLocaleString()}</span>
+                  {isLoadingCars ? (
+                    <div className="loading-cars">
+                      <div className="loading-spinner"></div>
+                      <p>Loading all BMW models...</p>
+                    </div>
+                  ) : filteredCars.length === 0 ? (
+                    <div className="no-results">
+                      {searchQuery ? (
+                        <div>
+                          <p>No cars found matching "{searchQuery}"</p>
+                          <p className="search-suggestion">
+                            Try searching for: 3 Series, 5 Series, X5, M3, Z4<br/>
+                            Available years: 2000-2025
+                          </p>
                         </div>
-                        <div className={`car-checkbox ${isSelected ? 'checked' : ''}`}>
-                          {isSelected && '✓'}
+                      ) : (
+                        'No cars available'
+                      )}
+                    </div>
+                  ) : (
+                    filteredCars.map((car) => {
+                      const isSelected = selectedCars.find(c => c.id === car.id);
+                      const canSelect = selectedCars.length < 10 || isSelected;
+                      
+                      return (
+                        <div 
+                          key={car.id} 
+                          className={`car-item ${isSelected ? 'selected' : ''} ${!canSelect ? 'disabled' : ''}`}
+                          onClick={() => canSelect && toggleCarSelection(car)}
+                        >
+                          <div className="car-info">
+                            <span className="car-name">{carService.getComparisonDisplayName({
+                              id: parseInt(car.id),
+                              model_name: car.model_name,
+                              model_year: car.model_year,
+                              trim_variant: car.trim_variant,
+                              body_type: car.body_type,
+                              base_msrp_usd: car.base_msrp_usd,
+                              display_name: car.display_name
+                            })}</span>
+                            <span className="car-details">{car.model_year} • {carService.getComparisonDisplayPrice({
+                              id: parseInt(car.id),
+                              model_name: car.model_name,
+                              model_year: car.model_year,
+                              trim_variant: car.trim_variant,
+                              body_type: car.body_type,
+                              base_msrp_usd: car.base_msrp_usd,
+                              display_name: car.display_name
+                            })}</span>
+                          </div>
+                          <div className={`car-checkbox ${isSelected ? 'checked' : ''}`}>
+                            {isSelected && '✓'}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
                 <div className="car-selector-footer">
                   <button 

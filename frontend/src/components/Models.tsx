@@ -1,69 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { carService, type Car } from '../services/car';
 import './Models.css';
 
 const Models: React.FC = () => {
-  const bmwModels = [
-    {
-      id: 1,
-      name: 'BMW X5',
-      type: 'Sports Activity Vehicle',
-      price: 'Starting at $62,200',
-      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      features: ['xDrive AWD', '523 HP', 'Premium Interior', 'Advanced Safety'],
-      description: 'The ultimate Sports Activity Vehicle with commanding presence and exceptional performance.'
-    },
-    {
-      id: 2,
-      name: 'BMW 3 Series',
-      type: 'Sedan',
-      price: 'Starting at $36,350',
-      image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80',
-      features: ['255 HP', 'Sport Suspension', 'BMW Live Cockpit', '8-Speed Automatic'],
-      description: 'The benchmark in the luxury sport sedan segment with perfect balance of performance and efficiency.'
-    },
-    {
-      id: 3,
-      name: 'BMW i4',
-      type: 'Electric Gran Coupe',
-      price: 'Starting at $56,400',
-      image: 'https://images.unsplash.com/photo-1617886322207-569a06eebef1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      features: ['270 Mile Range', '536 HP', 'Zero Emissions', 'Fast Charging'],
-      description: 'Pure electric driving pleasure with the soul of a BMW and zero local emissions.'
-    },
-    {
-      id: 4,
-      name: 'BMW X3',
-      type: 'Sports Activity Vehicle',
-      price: 'Starting at $45,400',
-      image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-      features: ['xDrive AWD', '248 HP', 'Panoramic Roof', 'BMW Gesture Control'],
-      description: 'Versatile luxury SAV that masters every terrain with athletic performance and premium comfort.'
-    },
-    {
-      id: 5,
-      name: 'BMW 5 Series',
-      type: 'Executive Sedan',
-      price: 'Starting at $55,700',
-      image: 'https://images.unsplash.com/photo-1580414206179-e7f012737e90?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      features: ['335 HP', 'Executive Lounge', 'Adaptive Suspension', 'Gesture Control'],
-      description: 'The executive sedan that sets the standard for luxury, innovation, and driving dynamics.'
-    },
-    {
-      id: 6,
-      name: 'BMW iX',
-      type: 'Electric SAV',
-      price: 'Starting at $87,100',
-      image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80',
-      features: ['324 Mile Range', '516 HP', 'Panoramic Roof', '5G Connectivity'],
-      description: 'The future of luxury electric driving with groundbreaking technology and sustainable materials.'
-    }
-  ];
+  const navigate = useNavigate();
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAskAI = (modelName: string) => {
-    // For now, we'll show an alert. Later this can redirect to chatbot with model context
-    alert(`AI Assistant: I'd be happy to help you learn more about the ${modelName}! This feature will be available soon in our AI Chatbot.`);
+  useEffect(() => {
+    loadCars();
+  }, []);
+
+  const loadCars = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await carService.getCars();
+      setCars(response.cars);
+    } catch (err) {
+      console.error('Error loading cars:', err);
+      setError('Failed to load car models. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleCardClick = (car: Car) => {
+    navigate(`/models/${car.id}`);
+  };
+
+  const handleAskAI = (car: Car, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    // For now, we'll show an alert. Later this can redirect to chatbot with model context
+    alert(`AI Assistant: I'd be happy to help you learn more about the ${car.display_name}! This feature will be available soon in our AI Chatbot.`);
+  };
+
+  const handleLearnMore = (car: Car, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    navigate(`/models/${car.id}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="models-page">
+        <div className="models-hero">
+          <div className="hero-content">
+            <h1>BMW Model Range</h1>
+            <p>Discover our complete lineup of luxury vehicles, from electric innovations to performance legends</p>
+          </div>
+        </div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading BMW models...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="models-page">
+        <div className="models-hero">
+          <div className="hero-content">
+            <h1>BMW Model Range</h1>
+            <p>Discover our complete lineup of luxury vehicles, from electric innovations to performance legends</p>
+          </div>
+        </div>
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+          <button onClick={loadCars} className="retry-btn">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="models-page">
       <div className="models-hero">
@@ -75,30 +88,37 @@ const Models: React.FC = () => {
 
       <div className="models-container">
         <div className="models-grid">
-          {bmwModels.map(model => (
-            <div key={model.id} className="model-card">
+          {cars.map(car => (
+            <div key={car.id} className="model-card" onClick={() => handleCardClick(car)}>
               <div className="model-image-container">
                 <img 
-                  src={model.image} 
-                  alt={model.name}
+                  src={carService.getDisplayImage(car)} 
+                  alt={car.display_name || `${car.model_year} ${car.model_name} ${car.trim_variant}`}
                   className="model-image"
                   loading="lazy"
                 />
                 <div className="model-overlay">
-                  <span className="model-type">{model.type}</span>
+                  <span className="model-type">{car.body_type}</span>
                 </div>
               </div>
               
               <div className="model-info">
                 <div className="model-header">
-                  <h3 className="model-name">{model.name}</h3>
-                  <p className="model-price">{model.price}</p>
+                  <h3 className="model-name">
+                    {car.display_name || `${car.model_name} ${car.trim_variant}`}
+                  </h3>
+                  <p className="model-price">{carService.getDisplayPrice(car)}</p>
                 </div>
                 
-                <p className="model-description">{model.description}</p>
+                <p className="model-description">
+                  {car.model_year} {car.model_name} {car.trim_variant} - 
+                  {car.engine_type && ` ${carService.getEngineInfo(car)}`}
+                  {car.horsepower_hp && ` with ${car.horsepower_hp} HP`}
+                  {car.drivetrain && ` and ${car.drivetrain} drivetrain`}.
+                </p>
                 
                 <div className="model-features">
-                  {model.features.map((feature, index) => (
+                  {carService.getKeyFeatures(car).map((feature, index) => (
                     <span key={index} className="feature-badge">
                       {feature}
                     </span>
@@ -108,7 +128,7 @@ const Models: React.FC = () => {
                 <div className="model-actions">
                   <button 
                     className="ask-ai-btn"
-                    onClick={() => handleAskAI(model.name)}
+                    onClick={(e) => handleAskAI(car, e)}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
@@ -116,7 +136,7 @@ const Models: React.FC = () => {
                     </svg>
                     Ask AI about this model
                   </button>
-                  <button className="learn-more-btn">
+                  <button className="learn-more-btn" onClick={(e) => handleLearnMore(car, e)}>
                     Learn More
                   </button>
                 </div>
