@@ -522,13 +522,14 @@
 .message.bot .message-bubble {
   background: #ffffff;
   color: #000;
-  margin-right: 60px;
+  margin-right: 40px;
   margin-left: 50px; /* Space for bot icon */
   border: 2px solid #ffb3d9; /* Baby pink border */
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 18px;
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
+  max-width: 90%;
 }
 
 /* Bot Icon */
@@ -562,6 +563,11 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+/* Bot messages get wider */
+.message.bot .message-bubble {
+  max-width: 90%;
 }
 
 /* Enhanced styling for bot messages with markdown */

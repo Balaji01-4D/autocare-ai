@@ -616,9 +616,8 @@ def generate_automotive_response(message: str, user: User) -> str:
     Generate automotive-focused AI response
     """
     lower_message = message.lower()
-    print(lower_message + f" (my name details are : {str(user)})")
 
-    return get_response(lower_message + f" (my name details are : {str(user)})")
+    return get_response(lower_message + f" (my name is {user.name} and my email is {user.email} and my phone number is {user.number})")
 
 def generate_enhanced_automotive_response(message: str, selected_cars: list, user: User) -> str:
     """
@@ -645,7 +644,7 @@ def generate_enhanced_automotive_response_with_memory(message: str, selected_car
     Generate automotive response using memory/RAG context
     """
     # Prepare user name for personalization
-    user_name = user.name if hasattr(user, 'name') and user.name else "Customer"
+    user_name = user.name if hasattr(user, 'name') and user.name and user.name != "Guest" else "Customer"
     
     return get_response_with_memory(
         user_input=message,
