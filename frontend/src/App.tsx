@@ -18,8 +18,8 @@ const AppContent = ({ isAuthenticated, setIsAuthenticated }: {
   setIsAuthenticated: (auth: boolean) => void 
 }) => {
   const location = useLocation();
-  const hideNavbarRoutes = ['/auth', '/chatbot'];
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+  const hideNavbarRoutes = ['/auth'];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) || location.pathname.startsWith('/chatbot');
 
   return (
     <div className="App">
@@ -45,6 +45,11 @@ const AppContent = ({ isAuthenticated, setIsAuthenticated }: {
           </ProtectedRoute>
         } />
         <Route path="/chatbot" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated}>
+            <Chatbot />
+          </ProtectedRoute>
+        } />
+        <Route path="/chatbot/:carId" element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>
             <Chatbot />
           </ProtectedRoute>

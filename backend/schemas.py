@@ -162,9 +162,52 @@ class CarsComparisonListResponse(BaseModel):
 class ChatbotRequest(BaseModel):
     message: str
     selected_cars: Optional[List[str]] = []  # List of car IDs
+    session_id: Optional[str] = None  # Optional session ID for conversation continuity
 
 class ChatbotResponse(BaseModel):
     response: str
     user: Optional[UserResponse] = None  # Optional for non-authenticated users
     timestamp: datetime
     selected_cars_info: Optional[List[CarResponse]] = None
+    session_id: Optional[str] = None  # Session ID for conversation tracking
+    context_used: Optional[str] = None  # What historical context was used
+
+# Car-specific chatbot schemas
+class CarSpecificChatbotRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None  # Optional session ID for conversation continuity
+
+class CarSpecificChatbotResponse(BaseModel):
+    response: str
+    car_context: CarResponse  # The specific car this chat is about
+    user: Optional[UserResponse] = None  # Optional for non-authenticated users
+    timestamp: datetime
+    session_id: Optional[str] = None  # Session ID for conversation tracking
+    context_used: Optional[str] = None  # What historical context was used
+    specialized_context: Optional[str] = None  # Car-specific context used
+
+# Chat history schemas
+class ConversationSummary(BaseModel):
+    id: int
+    session_id: str
+    title: Optional[str]
+    message_count: int
+    last_activity: datetime
+    preview: Optional[str]  # First few characters of last message
+
+class ChatHistoryResponse(BaseModel):
+    conversations: List[ConversationSummary]
+    total_conversations: int
+
+class MessageWithContext(BaseModel):
+    id: int
+    message: str
+    response: Optional[str]
+    sender: str
+    selected_cars: Optional[List[str]]
+    created_at: datetime
+    context_used: Optional[str]
+
+class ConversationDetailResponse(BaseModel):
+    conversation: ConversationSummary
+    messages: List[MessageWithContext]

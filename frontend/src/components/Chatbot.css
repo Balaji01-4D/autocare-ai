@@ -24,16 +24,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  color: #007aff;
-  text-decoration: none;
-  transition: all 0.2s ease;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #222;
+  background: #fff;
+  border: 1.5px solid #bbb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  margin-right: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .back-button:hover {
-  background: rgba(0, 122, 255, 0.1);
+  border-color: #007aff;
+  background: #f0f6ff;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.10);
+}
+
+.back-button svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  stroke: currentColor;
 }
 
 .chat-title {
@@ -44,6 +56,373 @@
   color: #000;
   margin: 0;
   letter-spacing: -0.4px;
+}
+
+/* Car-specific title styling */
+.chat-title.car-specific {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.chat-title .car-model-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+}
+
+.chat-title .car-specialist-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Car Info Panel */
+.car-info-panel {
+  background: linear-gradient(135deg, #007aff 0%, #005ecf 100%);
+  color: white;
+  margin: 16px 20px;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.2);
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.car-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.car-info-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.car-info-price {
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.car-info-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.car-info-item {
+  padding: 4px 0;
+}
+
+.car-info-label {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.car-quick-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.car-quick-action-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.car-quick-action-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Markdown Content Styling */
+.markdown-content {
+  line-height: 1.6;
+  color: inherit;
+}
+
+/* Markdown Headers */
+.markdown-content .md-h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 16px 0 12px 0;
+  color: #1a1a1a;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.markdown-content .md-h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 16px 0 10px 0;
+  color: #1a1a1a;
+}
+
+.markdown-content .md-h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 14px 0 8px 0;
+  color: #1a1a1a;
+}
+
+.markdown-content .md-h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0 8px 0;
+  color: #1a1a1a;
+}
+
+/* Markdown Paragraphs */
+.markdown-content .md-paragraph {
+  margin: 8px 0;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.markdown-content .md-paragraph:first-child {
+  margin-top: 0;
+}
+
+.markdown-content .md-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Markdown Lists */
+.markdown-content .md-list {
+  margin: 8px 0;
+  padding-left: 0;
+}
+
+.markdown-content .md-list-unordered {
+  list-style: none;
+}
+
+.markdown-content .md-list-ordered {
+  list-style: none;
+  counter-reset: list-counter;
+}
+
+.markdown-content .md-list-item {
+  margin: 4px 0;
+  padding-left: 20px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.markdown-content .md-list-unordered .md-list-item::before {
+  content: "•";
+  color: #007aff;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.markdown-content .md-list-ordered .md-list-item {
+  counter-increment: list-counter;
+}
+
+.markdown-content .md-list-ordered .md-list-item::before {
+  content: counter(list-counter) ".";
+  color: #007aff;
+  font-weight: 600;
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 16px;
+}
+
+/* Nested lists */
+.markdown-content .md-list .md-list {
+  margin: 2px 0;
+  padding-left: 16px;
+}
+
+/* Markdown Text Emphasis */
+.markdown-content .md-bold {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.markdown-content .md-italic {
+  font-style: italic;
+  color: #374151;
+}
+
+/* Markdown Code */
+.markdown-content .md-code-inline {
+  background: #f3f4f6;
+  color: #dc2626;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.markdown-content .md-pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content .md-code-block {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Markdown Links */
+.markdown-content .md-link {
+  color: #007aff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.markdown-content .md-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Markdown Tables */
+.markdown-content .md-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.markdown-content .md-table-header {
+  background: #f8f9fa;
+  color: #374151;
+  font-weight: 600;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.markdown-content .md-table-cell {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f3f4;
+  color: inherit;
+}
+
+.markdown-content .md-table-row:nth-child(even) {
+  background: #fafbfc;
+}
+
+.markdown-content .md-table-row:hover {
+  background: #f0f6ff;
+}
+
+/* Markdown Blockquotes */
+.markdown-content .md-blockquote {
+  border-left: 4px solid #007aff;
+  background: #f8f9ff;
+  margin: 12px 0;
+  padding: 12px 16px;
+  color: #374151;
+  font-style: italic;
+  border-radius: 0 8px 8px 0;
+}
+
+.markdown-content .md-blockquote .md-paragraph {
+  margin: 0;
+}
+
+/* Markdown Horizontal Rule */
+.markdown-content .md-hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+  margin: 20px 0;
+}
+
+/* Special BMW-themed styling for bot messages */
+.message.bot .markdown-content .md-h1,
+.message.bot .markdown-content .md-h2,
+.message.bot .markdown-content .md-h3,
+.message.bot .markdown-content .md-h4 {
+  color: #007aff;
+}
+
+.message.bot .markdown-content .md-bold {
+  color: #007aff;
+}
+
+.message.bot .markdown-content .md-list-unordered .md-list-item::before,
+.message.bot .markdown-content .md-list-ordered .md-list-item::before {
+  color: #007aff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .markdown-content .md-h1 {
+    font-size: 20px;
+  }
+  
+  .markdown-content .md-h2 {
+    font-size: 18px;
+  }
+  
+  .markdown-content .md-h3 {
+    font-size: 16px;
+  }
+  
+  .markdown-content .md-table {
+    font-size: 12px;
+  }
+  
+  .markdown-content .md-table-header,
+  .markdown-content .md-table-cell {
+    padding: 8px;
+  }
+  
+  .markdown-content .md-pre {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
 }
 
 .nav-spacer {
@@ -69,7 +448,7 @@
   flex-direction: column;
   min-height: 0;
   margin: 0;
-  padding: 16px;
+  padding: 20px;
 }
 
 .chat-messages {
@@ -78,7 +457,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 /* Custom Scrollbar */
@@ -127,7 +506,7 @@
   background: #ffffff;
   color: #000;
   border: 2px solid #ffb3d9; /* Baby pink border to match bot messages */
-  margin-left: 80px;
+  margin-left: 60px;
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 18px;
   border-top-left-radius: 18px;
@@ -143,7 +522,7 @@
 .message.bot .message-bubble {
   background: #ffffff;
   color: #000;
-  margin-right: 80px;
+  margin-right: 60px;
   margin-left: 50px; /* Space for bot icon */
   border: 2px solid #ffb3d9; /* Baby pink border */
   border-bottom-left-radius: 6px;
@@ -172,26 +551,42 @@
 
 /* Message Bubble */
 .message-bubble {
-  max-width: 75%;
-  padding: 10px 14px;
+  max-width: 80%;
+  padding: 16px 20px;
   position: relative;
   word-wrap: break-word;
-  line-height: 1.35;
-  font-size: 16px;
-  box-shadow: none;
+  line-height: 1.4;
+  font-size: 17px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Enhanced styling for bot messages with markdown */
+.message.bot .message-bubble {
+  min-height: auto; /* Allow natural height expansion for markdown content */
 }
 
 .message-text {
-  font-size: 16px;
+  font-size: 17px;
   white-space: pre-wrap;
   margin: 0;
+  line-height: 1.4;
+}
+
+/* Override for markdown content */
+.message-text.markdown-content {
+  white-space: normal; /* Allow markdown to flow naturally */
+  font-size: 15px; /* Slightly smaller for better readability with markdown */
 }
 
 .message-timestamp {
-  font-size: 12px;
-  opacity: 0.5;
+  font-size: 13px;
+  opacity: 0.6;
   text-align: center;
-  margin: 8px 0 4px 0;
+  margin: 10px 0 6px 0;
   font-weight: 400;
 }
 
@@ -199,7 +594,8 @@
 .typing-message .message-bubble {
   background: #ffffff !important;
   border: 2px solid #ffb3d9 !important; /* Baby pink border to match bot messages */
-  padding: 12px 16px !important;
+  padding: 16px 20px !important;
+  min-height: 48px !important;
 }
 
 .typing-indicator {

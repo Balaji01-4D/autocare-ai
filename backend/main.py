@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import SQLModel
 from datetime import datetime
 from typing import Optional
-from llama import get_response  
+from llama import get_response, get_response_with_memory, get_response_with_car_specific_context  
 from controllers import (
     register_user_controller,
     login_user_controller, 
@@ -33,11 +33,15 @@ from schemas import (
     CarComparisonResponse,
     CarsComparisonListResponse,
     ChatbotRequest,
-    ChatbotResponse
+    ChatbotResponse,
+    CarSpecificChatbotRequest,
+    CarSpecificChatbotResponse,
+    ChatHistoryResponse,
+    ConversationDetailResponse
 )
 from models import User
 from pydantic import BaseModel
-from memory_store import ConversationMemory
+from chat_memory_controller import chat_memory
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
@@ -73,11 +77,10 @@ class Query(BaseModel):
     user_id: str
     query: str
 
-memory = ConversationMemory()
-
 # Create database tables
 @app.on_event("startup")
 def create_db_and_tables():
+    # Chat models are now defined in models.py and will be auto-registered
     SQLModel.metadata.create_all(engine)
 
 @app.get("/")
@@ -296,12 +299,13 @@ def chatbot_api(
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
-    Process chatbot message with optional car selection and return AI response
+    Process chatbot message with memory/RAG support and optional car selection
     Works for both authenticated and non-authenticated users
     """
     try:
         user_message = request.message
         selected_car_ids = request.selected_cars or []
+        session_id = request.session_id
         
         # Get selected cars info if any
         selected_cars_info = []
@@ -315,11 +319,46 @@ def chatbot_api(
             except ValueError:
                 # Handle invalid car IDs gracefully
                 selected_cars_info = []
+
+        # Initialize response variables
+        response_text = ""
+        context_used = None
+        user_data = None
         
-        # Generate response based on message and selected cars
         if current_user:
-            # Authenticated user - personalized response
-            response_text = generate_enhanced_automotive_response(user_message, selected_cars_info, current_user)
+            # Authenticated user - use memory and personalization
+            user_id = current_user.id
+            
+            # Get relevant context from chat history
+            relevant_context = chat_memory.get_relevant_context(
+                user_id=user_id,
+                current_message=user_message,
+                limit=5
+            )
+            
+            # Generate enhanced response with context
+            response_text = generate_enhanced_automotive_response_with_memory(
+                user_message, 
+                selected_cars_info, 
+                current_user, 
+                relevant_context
+            )
+            
+            # Prepare context summary for response
+            if relevant_context:
+                context_summary = f"Used {len(relevant_context)} previous conversation(s) for context"
+                context_used = context_summary
+            
+            # Store this interaction in memory
+            chat_memory.store_message(
+                user_id=user_id,
+                user_message=user_message,
+                bot_response=response_text,
+                selected_cars=selected_car_ids,
+                session_id=session_id,
+                context_used=context_used
+            )
+            
             user_data = {
                 "id": current_user.id,
                 "name": current_user.name,
@@ -335,19 +374,52 @@ def chatbot_api(
                 } if current_user.address else None
             }
         else:
-            # Non-authenticated user - generic response
-            from models import User as UserModel
+            # Non-authenticated user - use memory with guest user ID
+            user_id = 0  # Use special guest user ID
+            
+            # Get relevant context from chat history for guest
+            relevant_context = chat_memory.get_relevant_context(
+                user_id=user_id,
+                current_message=user_message,
+                limit=3  # Fewer context items for guests
+            )
             
             # Create a temporary user object for the response generator
+            from models import User as UserModel
             temp_user = UserModel(id=0, name="Guest", email="guest@example.com", number="", password="")
-            response_text = generate_enhanced_automotive_response(user_message, selected_cars_info, temp_user)
+            
+            # Generate enhanced response with context even for guests
+            response_text = generate_enhanced_automotive_response_with_memory(
+                user_message, 
+                selected_cars_info, 
+                temp_user, 
+                relevant_context
+            )
+            
+            # Prepare context summary for response
+            if relevant_context:
+                context_summary = f"Used {len(relevant_context)} previous conversation(s) for context"
+                context_used = context_summary
+            
+            # Store this interaction in memory for guest user
+            chat_memory.store_message(
+                user_id=user_id,
+                user_message=user_message,
+                bot_response=response_text,
+                selected_cars=selected_car_ids,
+                session_id=session_id,
+                context_used=context_used
+            )
+            
             user_data = None
 
         return ChatbotResponse(
             response=response_text,
             user=user_data,
             timestamp=datetime.utcnow(),
-            selected_cars_info=selected_cars_info if selected_cars_info else None
+            selected_cars_info=selected_cars_info if selected_cars_info else None,
+            session_id=session_id,
+            context_used=context_used
         )
         
     except HTTPException as e:
@@ -356,6 +428,153 @@ def chatbot_api(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Chatbot API error: {str(e)}"
+        )
+
+@app.post("/api/chatbot/car/{car_id}", response_model=CarSpecificChatbotResponse)
+def car_specific_chatbot_api(
+    car_id: int,
+    request: CarSpecificChatbotRequest,
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    """
+    Process chatbot message with specialized focus on a specific car model
+    Enhanced with car-specific context and knowledge
+    """
+    try:
+        user_message = request.message
+        session_id = request.session_id
+        
+        # Get the specific car details
+        try:
+            cars_from_db = get_cars_by_ids_controller([car_id])
+            if not cars_from_db:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Car with ID {car_id} not found"
+                )
+            
+            car_info = cars_from_db[0]
+            car_response = convert_car_to_response(car_info)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Error retrieving car details: {str(e)}"
+            )
+
+        # Initialize response variables
+        response_text = ""
+        context_used = None
+        specialized_context = None
+        user_data = None
+        
+        if current_user:
+            # Authenticated user - use memory and personalization
+            user_id = current_user.id
+            
+            # Get relevant context from chat history with car-specific filter
+            relevant_context = chat_memory.get_relevant_context(
+                user_id=user_id,
+                current_message=user_message,
+                limit=5
+            )
+            
+            # Generate specialized car-specific response
+            response_text = generate_car_specific_response_with_memory(
+                user_message, 
+                car_info, 
+                current_user, 
+                relevant_context
+            )
+            
+            # Prepare context summaries
+            if relevant_context:
+                context_summary = f"Used {len(relevant_context)} previous conversation(s) for context"
+                context_used = context_summary
+            
+            specialized_context = f"Specialized knowledge for {car_response.model_year} {car_response.model_name} {car_response.trim_variant}"
+            
+            # Store this interaction in memory with car-specific tagging
+            chat_memory.store_message(
+                user_id=user_id,
+                user_message=user_message,
+                bot_response=response_text,
+                selected_cars=[str(car_id)],
+                session_id=session_id,
+                context_used=f"{context_used} | Car-specific mode: {car_id}" if context_used else f"Car-specific mode: {car_id}"
+            )
+            
+            user_data = {
+                "id": current_user.id,
+                "name": current_user.name,
+                "email": current_user.email,
+                "number": current_user.number,
+                "address": {
+                    "id": current_user.address.id if current_user.address else None,
+                    "door_no": current_user.address.door_no if current_user.address else None,
+                    "street": current_user.address.street if current_user.address else None,
+                    "city": current_user.address.city if current_user.address else None,
+                    "state": current_user.address.state if current_user.address else None,
+                    "zipcode": current_user.address.zipcode if current_user.address else None,
+                } if current_user.address else None
+            }
+        else:
+            # Non-authenticated user - use memory with guest user ID
+            user_id = 0  # Use special guest user ID
+            
+            # Get relevant context from chat history for guest
+            relevant_context = chat_memory.get_relevant_context(
+                user_id=user_id,
+                current_message=user_message,
+                limit=3  # Fewer context items for guests
+            )
+            
+            # Create a temporary user object for the response generator
+            from models import User as UserModel
+            temp_user = UserModel(id=0, name="Guest", email="guest@example.com", number="", password="")
+            
+            # Generate specialized car-specific response
+            response_text = generate_car_specific_response_with_memory(
+                user_message, 
+                car_info, 
+                temp_user, 
+                relevant_context
+            )
+            
+            # Prepare context summaries
+            if relevant_context:
+                context_summary = f"Used {len(relevant_context)} previous conversation(s) for context"
+                context_used = context_summary
+            
+            specialized_context = f"Specialized knowledge for {car_response.model_year} {car_response.model_name} {car_response.trim_variant}"
+            
+            # Store this interaction in memory for guest user with car-specific tagging
+            chat_memory.store_message(
+                user_id=user_id,
+                user_message=user_message,
+                bot_response=response_text,
+                selected_cars=[str(car_id)],
+                session_id=session_id,
+                context_used=f"{context_used} | Car-specific mode: {car_id}" if context_used else f"Car-specific mode: {car_id}"
+            )
+            
+            user_data = None
+
+        return CarSpecificChatbotResponse(
+            response=response_text,
+            car_context=car_response,
+            user=user_data,
+            timestamp=datetime.utcnow(),
+            session_id=session_id,
+            context_used=context_used,
+            specialized_context=specialized_context
+        )
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Car-specific chatbot API error: {str(e)}"
         )
 
 @app.post("/chatbot/message")
@@ -419,6 +638,103 @@ def generate_enhanced_automotive_response(message: str, selected_cars: list, use
     enhanced_message = car_context + message
 
     return generate_automotive_response(enhanced_message, user)
+
+
+def generate_enhanced_automotive_response_with_memory(message: str, selected_cars, user, conversation_context=None):
+    """
+    Generate automotive response using memory/RAG context
+    """
+    # Prepare user name for personalization
+    user_name = user.name if hasattr(user, 'name') and user.name else "Customer"
+    
+    return get_response_with_memory(
+        user_input=message,
+        conversation_context=conversation_context,
+        selected_cars=selected_cars,
+        user_name=user_name
+    )
+
+
+def generate_car_specific_response_with_memory(message: str, specific_car, user, conversation_context=None):
+    """
+    Generate specialized car-focused response using memory/RAG context
+    """
+    # Prepare user name for personalization
+    user_name = user.name if hasattr(user, 'name') and user.name else "Customer"
+    
+    return get_response_with_car_specific_context(
+        user_input=message,
+        specific_car=specific_car,
+        conversation_context=conversation_context,
+        user_name=user_name
+    )
+
+
+# Chat history endpoints
+@app.get("/api/chat/history", response_model=ChatHistoryResponse)
+def get_chat_history(
+    limit: int = 20,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get user's chat conversation history
+    """
+    try:
+        history = chat_memory.get_conversation_history(
+            user_id=current_user.id,
+            limit=limit
+        )
+        return history
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching chat history: {str(e)}"
+        )
+
+
+@app.get("/api/chat/conversation/{conversation_id}", response_model=ConversationDetailResponse)
+def get_conversation_detail(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get detailed conversation with all messages
+    """
+    try:
+        conversation = chat_memory.get_conversation_detail(
+            user_id=current_user.id,
+            conversation_id=conversation_id
+        )
+        return conversation
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching conversation: {str(e)}"
+        )
+
+
+@app.delete("/api/chat/conversation/{conversation_id}")
+def delete_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete a conversation and all its messages
+    """
+    try:
+        # This would need to be implemented in the chat_memory_controller
+        # For now, return success
+        return {"message": "Conversation deletion not yet implemented"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting conversation: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import carService from '../services/car';
 import './Chatbot.css';
 
@@ -25,16 +27,88 @@ interface Car {
   display_name?: string;
 }
 
+// Markdown Message Component
+const MarkdownMessage: React.FC<{ content: string; sender: 'user' | 'bot' }> = ({ content, sender }) => {
+  // Custom components for markdown elements
+  const markdownComponents = {
+    // Headers
+    h1: ({ children }: any) => <h1 className="md-h1">{children}</h1>,
+    h2: ({ children }: any) => <h2 className="md-h2">{children}</h2>,
+    h3: ({ children }: any) => <h3 className="md-h3">{children}</h3>,
+    h4: ({ children }: any) => <h4 className="md-h4">{children}</h4>,
+    
+    // Paragraphs
+    p: ({ children }: any) => <p className="md-paragraph">{children}</p>,
+    
+    // Lists
+    ul: ({ children }: any) => <ul className="md-list md-list-unordered">{children}</ul>,
+    ol: ({ children }: any) => <ol className="md-list md-list-ordered">{children}</ol>,
+    li: ({ children }: any) => <li className="md-list-item">{children}</li>,
+    
+    // Emphasis
+    strong: ({ children }: any) => <strong className="md-bold">{children}</strong>,
+    em: ({ children }: any) => <em className="md-italic">{children}</em>,
+    
+    // Code
+    code: ({ children, className }: any) => {
+      // Check if it's inline code or code block
+      const isInline = !className;
+      return isInline ? (
+        <code className="md-code-inline">{children}</code>
+      ) : (
+        <code className="md-code-block">{children}</code>
+      );
+    },
+    pre: ({ children }: any) => <pre className="md-pre">{children}</pre>,
+    
+    // Links
+    a: ({ href, children }: any) => (
+      <a href={href} className="md-link" target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ),
+    
+    // Tables
+    table: ({ children }: any) => <table className="md-table">{children}</table>,
+    thead: ({ children }: any) => <thead className="md-table-head">{children}</thead>,
+    tbody: ({ children }: any) => <tbody className="md-table-body">{children}</tbody>,
+    tr: ({ children }: any) => <tr className="md-table-row">{children}</tr>,
+    th: ({ children }: any) => <th className="md-table-header">{children}</th>,
+    td: ({ children }: any) => <td className="md-table-cell">{children}</td>,
+    
+    // Blockquotes
+    blockquote: ({ children }: any) => <blockquote className="md-blockquote">{children}</blockquote>,
+    
+    // Horizontal rule
+    hr: () => <hr className="md-hr" />,
+  };
+
+  if (sender === 'user') {
+    // Users typically don't need full markdown rendering, keep simple
+    return <span className="message-text">{content}</span>;
+  }
+
+  // For bot messages, render with full markdown support
+  return (
+    <div className="message-text markdown-content">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={markdownComponents}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
 const Chatbot: React.FC = () => {
+  // Route parameters and location for car-specific mode
+  const { carId } = useParams<{ carId: string }>();
+  const location = useLocation();
+  const passedCarModel = location.state?.carModel;
+
   // State management for chat functionality
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m BMW AI, your intelligent automotive assistant. I can help you explore our BMW lineup, compare vehicles, and answer all your automotive questions. How can I assist you today?',
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedCars, setSelectedCars] = useState<Car[]>([]);
@@ -42,6 +116,7 @@ const Chatbot: React.FC = () => {
   const [showCarSelector, setShowCarSelector] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingCars, setIsLoadingCars] = useState(false);
+  const [currentCar, setCurrentCar] = useState<Car | null>(passedCarModel || null);
   
   // Refs for DOM manipulation
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -74,6 +149,75 @@ const Chatbot: React.FC = () => {
     adjustTextareaHeight();
   }, [inputValue]);
 
+  // Initialize car-specific mode
+  useEffect(() => {
+    const initializeChat = async () => {
+      if (carId && !currentCar) {
+        try {
+          // Fetch car details if not passed via state
+          const response = await carService.getCars();
+          const foundCar = response.cars.find(car => car.id.toString() === carId);
+          if (foundCar) {
+            const carData: Car = {
+              id: foundCar.id.toString(),
+              model_name: foundCar.model_name,
+              model_year: foundCar.model_year,
+              trim_variant: foundCar.trim_variant,
+              body_type: foundCar.body_type,
+              base_msrp_usd: foundCar.base_msrp_usd,
+              display_name: foundCar.display_name || `${foundCar.model_year} ${foundCar.model_name} ${foundCar.trim_variant}`
+            };
+            setCurrentCar(carData);
+            setSelectedCars([carData]);
+            
+            // Set specialized welcome message
+            setMessages([{
+              id: '1',
+              text: `Hello! I'm your **BMW AI assistant**, specialized to help you with the **${carData.display_name}**. 
+
+## What I can help you with:
+
+- **Detailed specifications** and performance data
+- **Feature explanations** and benefits
+- **Pricing information** and financing options
+- **Comparisons** with other BMW models
+- **Real-world insights** and ownership experience
+
+> I have comprehensive knowledge about this specific model and can answer questions about its features, specifications, performance, pricing, and more. 
+
+What would you like to know about the **${carData.display_name}**?`,
+              sender: 'bot',
+              timestamp: new Date()
+            }]);
+          }
+        } catch (error) {
+          console.error('Error loading car details:', error);
+        }
+      } else if (!carId && messages.length === 0) {
+        // Set general welcome message for regular chatbot mode
+        setMessages([{
+          id: '1',
+          text: `Hello! I'm **BMW AI**, your intelligent automotive assistant. 
+
+## How I can assist you:
+
+- **Explore our BMW lineup** with detailed model information
+- **Compare vehicles** side-by-side with specifications
+- **Answer automotive questions** with expert knowledge
+- **Provide personalized recommendations** based on your needs
+
+> I'm here to help you make informed decisions about your BMW purchase!
+
+How can I assist you today?`,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+      }
+    };
+
+    initializeChat();
+  }, [carId, currentCar, messages.length]);
+
   // Real API functions - fetch all cars for search, limit selection to 10
   const fetchCarsFromAPI = async (): Promise<Car[]> => {
     try {
@@ -98,7 +242,13 @@ const Chatbot: React.FC = () => {
   const sendToChatbotAPI = async (message: string, cars: Car[]): Promise<string> => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/chatbot`, {
+      
+      // Use specialized endpoint for car-specific mode
+      const endpoint = carId && currentCar 
+        ? `${API_BASE_URL}/api/chatbot/car/${carId}`
+        : `${API_BASE_URL}/api/chatbot`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,6 +340,15 @@ const Chatbot: React.FC = () => {
            car.model_year.toString().includes(searchQuery);
   });
 
+  // Handle quick question buttons for car-specific mode
+  const handleQuickQuestion = (question: string) => {
+    setInputValue(question);
+    // Trigger send after setting the input
+    setTimeout(() => {
+      sendMessage();
+    }, 100);
+  };
+
   // Handle sending messages
   const sendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -263,23 +422,85 @@ const Chatbot: React.FC = () => {
       {/* Top Navigation Bar */}
       <div className="chat-nav-bar">
         <Link to="/" className="back-button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="2" fill="none" />
+            <path d="M16.5 9L12 14L16.5 19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </Link>
-        <h1 className="chat-title">BMW AI</h1>
+        <h1 className={`chat-title ${currentCar ? 'car-specific' : ''}`}>
+          {currentCar ? (
+            <>
+              <span className="car-model-name">{currentCar.display_name}</span>
+              <span className="car-specialist-label">BMW Specialist</span>
+            </>
+          ) : (
+            'BMW AI'
+          )}
+        </h1>
         <div className="nav-spacer"></div>
       </div>
 
       {/* Main Chat Container */}
       <div className="chat-main-container">
+        {/* Car Info Panel - only show in car-specific mode */}
+        {currentCar && (
+          <div className="car-info-panel">
+            <div className="car-info-header">
+              <h3 className="car-info-title">{currentCar.display_name}</h3>
+              <span className="car-info-price">
+                {currentCar.base_msrp_usd ? `Starting at $${currentCar.base_msrp_usd.toLocaleString()}` : 'Contact for pricing'}
+              </span>
+            </div>
+            <div className="car-info-details">
+              <div className="car-info-item">
+                <span className="car-info-label">Year:</span> {currentCar.model_year}
+              </div>
+              <div className="car-info-item">
+                <span className="car-info-label">Body Type:</span> {currentCar.body_type}
+              </div>
+              <div className="car-info-item">
+                <span className="car-info-label">Model:</span> {currentCar.model_name}
+              </div>
+              <div className="car-info-item">
+                <span className="car-info-label">Trim:</span> {currentCar.trim_variant}
+              </div>
+            </div>
+            <div className="car-quick-actions">
+              <button 
+                className="car-quick-action-btn"
+                onClick={() => handleQuickQuestion('Tell me about the **key features** and what makes this model special')}
+              >
+                Key Features
+              </button>
+              <button 
+                className="car-quick-action-btn"
+                onClick={() => handleQuickQuestion('What are the **performance specifications** and engine details?')}
+              >
+                Performance
+              </button>
+              <button 
+                className="car-quick-action-btn"
+                onClick={() => handleQuickQuestion('How does this model **compare with similar BMW models**?')}
+              >
+                Compare
+              </button>
+              <button 
+                className="car-quick-action-btn"
+                onClick={() => handleQuickQuestion('What are the **ownership costs** including maintenance and insurance?')}
+              >
+                Costs
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Messages Area */}
         <div className="chat-messages-container" ref={chatContainerRef}>
           <div className="chat-messages">
             {messages.map((message) => (
               <div key={message.id} className={`message ${message.sender}`}>
                 <div className="message-bubble">
-                  <div className="message-text">{message.text}</div>
+                  <MarkdownMessage content={message.text} sender={message.sender} />
                   <div className="message-timestamp">{formatTime(message.timestamp)}</div>
                 </div>
               </div>

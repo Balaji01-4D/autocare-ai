@@ -33,8 +33,13 @@ const Models: React.FC = () => {
 
   const handleAskAI = (car: Car, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    // For now, we'll show an alert. Later this can redirect to chatbot with model context
-    alert(`AI Assistant: I'd be happy to help you learn more about the ${car.display_name}! This feature will be available soon in our AI Chatbot.`);
+    // Navigate to specialized chatbot page with car context
+    navigate(`/chatbot/${car.id}`, { 
+      state: { 
+        carModel: car,
+        context: 'model-specific' 
+      }
+    });
   };
 
   const handleLearnMore = (car: Car, e: React.MouseEvent) => {

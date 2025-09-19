@@ -1,6 +1,7 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
 from decimal import Decimal
+from datetime import datetime
 
 
 class Address(SQLModel, table=True):
@@ -34,6 +35,66 @@ class User(SQLModel, table=True):
     
     # One-to-one relationship with Address
     address: Optional[Address] = Relationship(back_populates="user")
+
+
+# Chat-related models for conversation memory
+class ChatConversation(SQLModel, table=True):
+    """
+    Stores chat conversation sessions per user
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    session_id: str = Field(index=True)  # To group related messages
+    title: Optional[str] = Field(default=None)  # Auto-generated conversation title
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    messages: List["ChatMessage"] = Relationship(back_populates="conversation")
+
+
+class ChatMessage(SQLModel, table=True):
+    """
+    Stores individual messages within conversations
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    conversation_id: int = Field(foreign_key="chatconversation.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    
+    # Message content
+    message: str = Field(index=True)  # User's message
+    response: Optional[str] = Field(default=None)  # Bot's response
+    sender: str = Field(default="user")  # "user" or "bot"
+    
+    # Context data
+    selected_cars: Optional[str] = Field(default=None)  # JSON string of car IDs
+    context_used: Optional[str] = Field(default=None)  # What context was used for response
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    conversation: Optional[ChatConversation] = Relationship(back_populates="messages")
+
+
+class ChatMemoryEntry(SQLModel, table=True):
+    """
+    Stores preprocessed memory entries for RAG retrieval
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    conversation_id: int = Field(foreign_key="chatconversation.id")
+    message_id: int = Field(foreign_key="chatmessage.id")
+    
+    # Content for RAG
+    content: str = Field(index=True)  # Preprocessed content for similarity search
+    keywords: Optional[str] = Field(default=None)  # Extracted keywords
+    intent: Optional[str] = Field(default=None)  # Classified intent (comparison, info, etc.)
+    car_models_mentioned: Optional[str] = Field(default=None)  # JSON array of mentioned models
+    
+    # Relevance scoring
+    importance_score: float = Field(default=0.5)  # 0-1 score for importance
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # Car-related models
