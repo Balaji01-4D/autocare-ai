@@ -1,5 +1,8 @@
 
+
 # AutoCare AI
+
+> **Hackathon Project:** Built for Techno-a-thon, St. Joseph College of Engineering, Chennai (Sep 18 & 19, 2025)
 
 AutoCare AI is an intelligent, full-stack automotive care platform designed to revolutionize the car ownership experience. It combines a robust FastAPI backend with a modern React + TypeScript frontend, delivering advanced AI-powered diagnostics, smart maintenance, and seamless customer support for BMW India vehicles.
 
