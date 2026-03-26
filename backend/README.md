@@ -1,17 +1,6 @@
 # AutoCare AI Backend API
 
-Production-ready FastAPI backend with JWT authentication for the AutoCare AI application.
-
-## Features
-
-- ✅ JWT-based authentication (access & refresh tokens)
-- ✅ Password hashing with bcrypt
-- ✅ Input validation and sanitization
-- ✅ Rate limiting for login attempts
-- ✅ One-to-one user-address relationship
-- ✅ CORS support
-- ✅ Comprehensive error handling
-- ✅ Production-ready security practices
+ FastAPI backend with JWT authentication for the AutoCare AI application.
 
 ## Installation
 
